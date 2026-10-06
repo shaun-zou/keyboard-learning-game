@@ -3,6 +3,7 @@ import Home from './screens/Home.jsx';
 import Learn from './screens/Learn.jsx';
 import FindKey from './screens/FindKey.jsx';
 import TypeGame from './screens/Type.jsx';
+import Privacy from './screens/Privacy.jsx';
 import { isSoundOn, setSoundOn, warmUpSpeech } from './audio.js';
 
 export default function App() {
@@ -77,9 +78,21 @@ export default function App() {
         {screen === 'learn' && <Learn />}
         {screen === 'find' && <FindKey />}
         {screen === 'type' && <TypeGame />}
+        {screen === 'privacy' && <Privacy onBack={() => setScreen('home')} />}
       </main>
 
-      <footer className="app__foot">小朋友，每天练一练，你就是键盘小达人！⭐</footer>
+      <footer className="app__foot">
+        小朋友，每天练一练，你就是键盘小达人！⭐
+        <button
+          className="app__foot-privacy"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setScreen('privacy');
+          }}
+        >
+          🔒 隐私说明
+        </button>
+      </footer>
     </div>
   );
 }
