@@ -14,7 +14,7 @@ const MODES = [
     emoji: '🔍',
     tag: '进阶',
     title: '找键位闯关',
-    desc: '看字母、找按键！四关挑战，看看谁的小眼睛最厉害',
+    desc: '看字母、找按键！六关挑战，还有字母歌和星球大战等你玩',
     cardClass: 'mode-card--blue'
   },
   {

@@ -1,60 +1,68 @@
-# Keyboard Learning Game for Kids 🎮
+# 键盘小达人 · 儿童键盘打字小游戏
 
-A fun, interactive web game designed to help children learn their keyboard layout, understand where each key is located on the computer, and practice typing!
+> 专为孩子设计的免费键盘学习网站。通过趣味闯关、星球大战射击、字母歌等游戏，帮助小朋友快乐熟悉键盘键位与打字。
+>
+> **电脑端体验最佳**，无需注册，数据只保存在本机浏览器。
 
-## Features
+🔗 **在线试玩：** [https://keyboard-learning-game-1fr.pages.dev/](https://keyboard-learning-game-1fr.pages.dev/)
 
-- **Visual Keyboard Display** - See exactly which keys correspond to letter keys on your computer
-- **Interactive Lessons** - Learn each letter from A to Z in a progressive order
-- **Click-to-Learn** - Click the letter on screen and tell you which physical key is represented
-- **Progress Tracking** - See how many letters you've learned
-- **Practice Mode** - Practice typing combinations for different letters
+---
 
-## How to Play
+## 三大游戏模式
 
-1. Start the game using `npm run dev` or `npm start` in the `keyboard-learning-game/` folder
-2. Click on each letter (A-Z) that you know how to type
-3. The app will show you which physical key on your keyboard it matches
-4. Practice combinations like "ASDF", "JKL", etc.
+| 模式 | 说明 |
+|------|------|
+| 🎹 认识键盘 | 双手悬空引导 → 敲击高亮，认识 26 个字母键，学习正确的手指分区 |
+| 🔍 找键位闯关 | 六关递进挑战：主键位安家 → 上排探险 → 下排寻宝 → 字母大闯关 → 字母歌大合唱 → 星球大战 |
+| ⌨️ 趣味练打字 | 从主键位热身到单词、拼音、短句，循序渐进成为打字小达人 |
 
-## Project Structure
+### 亮点
+- **真人级神经语音**：字母读音和夸奖语音使用预生成音频，按键即播零延迟
+- **像素风星球大战**：敌机俯冲、战机追踪射击、激光炮音效，纯前端手绘像素精灵
+- **本地统计三件套**：本机最高分、历史统计、连续打卡天数（纯 localStorage，不上传服务器）
 
-```
-keyboard-learning-game/
-├── index.html          # Main HTML structure
-├── package.json        # Dependencies and scripts
-├── vite.config.js      # Vite configuration
-├── vite-env.d.ts       # TypeScript declarations
-├── src/
-│   ├── App.jsx         # Main React component
-│   ├── styles.css      # Global styles
-│   └── animation.css   # Animations (if needed)
-└── index.js            # Vite entry point
-```
+---
 
-## Keyboard Layout Legend (for reference)
+## 技术栈
 
-**QWERTY US Layout:**
-- QWERTY ← → Space Bar
-- A S D F G H J K L ; ' : - _ /  Backspace
-- Z X C V B N M , . ? Enter Home Page Up
+- React 18 + Vite 5
+- 纯前端，无后端，可双击 `dist/index.html` 离线运行
+- Web Audio API 合成音效
+- Microsoft Edge TTS 预生成语音（离线可用）
 
-This game helps children memorize which keys correspond to letters on their keyboard.
+---
 
-## Development
+## 本地开发
 
 ```bash
-# Install dependencies
-cd keyboard-learning-game
+# 安装依赖
 npm install
 
-# Start the development server
+# 启动开发服务器
 npm run dev
 
-# Run tests (if available)
-npm test
+# 构建生产产物（dist/，双击 index.html 即可离线运行）
+npm run build
 ```
+
+---
+
+## 部署
+
+本项目已接入 **Cloudflare Pages**（GitHub 连接式自动部署）。
+
+推送代码到 `main` 分支即可自动构建上线，无需手动操作。
+
+---
+
+## 隐私说明
+
+- 不收集任何个人信息，没有注册/登录/账号系统
+- 所有学习记录仅保存在当前电脑的浏览器本地存储（localStorage）中
+- 语音为预生成音频文件，播放时不会向第三方发送数据
+
+---
 
 ## License
 
-MIT - Free for educational use in classrooms and home learning environments.
+MIT © shaun-zou
