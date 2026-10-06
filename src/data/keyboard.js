@@ -292,7 +292,7 @@ export const TYPE_LESSONS = [
       'asdf jkl;',
       'a;sldkfj',
       'ffjj dkdk',
-      'jazz lad',
+      'salsa dad',
       'dad lass',
       'ask dad',
       'fall salad',
@@ -313,12 +313,12 @@ export const TYPE_LESSONS = [
       'quiet people',
       'you are super',
       'quiet tree',
-      'pop quiz',
+      'pure joy',
       'write it',
       'top type',
       'we are here',
       'pretty puppy',
-      'try your best',
+      'you are great',
       'happy writer'
     ].map(toLine)
   },
