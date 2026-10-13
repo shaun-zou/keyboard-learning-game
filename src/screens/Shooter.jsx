@@ -462,7 +462,7 @@ export default function Shooter({ level, levelIdx, onQuit, onFinish }) {
               className={`shooter-enemy${e.locked ? ' shooter-enemy--locked' : ''}`}
               style={{ left: `${e.x}%`, top: `${e.y}%` }}
             >
-              <PixelSprite map={ENEMY_MAP} palette={ENEMY_PALETTE} pixel={5} />
+              <PixelSprite map={ENEMY_MAP} palette={ENEMY_PALETTE} pixel={4} />
               <span className="shooter-enemy__letter">{e.letter.toUpperCase()}</span>
             </div>
           ))}
@@ -485,7 +485,7 @@ export default function Shooter({ level, levelIdx, onQuit, onFinish }) {
               className="shooter-boom"
               style={{ left: `${ex.x}%`, top: `${ex.y}%` }}
             >
-              <PixelSprite map={BOOM_MAP} palette={BOOM_PALETTE} pixel={5} />
+              <PixelSprite map={BOOM_MAP} palette={BOOM_PALETTE} pixel={4} />
             </div>
           ))}
           {/* 地面 */}
@@ -504,14 +504,14 @@ export default function Shooter({ level, levelIdx, onQuit, onFinish }) {
                   className="shooter-ship__muzzle"
                 />
               )}
-              <PixelSprite map={SHIP_MAP} palette={SHIP_PALETTE} pixel={5} />
+              <PixelSprite map={SHIP_MAP} palette={SHIP_PALETTE} pixel={4} />
             </div>
           </div>
 
           {phase === 'ready' && (
             <div className="shooter-overlay">
               <div className="shooter-overlay__emoji">
-                <PixelSprite map={SHIP_MAP} palette={SHIP_PALETTE} pixel={7} />
+                <PixelSprite map={SHIP_MAP} palette={SHIP_PALETTE} pixel={4} />
               </div>
               <h2 className="shooter-overlay__title">星球大战</h2>
               <p className="shooter-overlay__desc">
@@ -550,7 +550,7 @@ export default function Shooter({ level, levelIdx, onQuit, onFinish }) {
           {phase === 'over' && (
             <div className="shooter-overlay">
               <div className="shooter-overlay__emoji">
-                <PixelSprite map={BOOM_MAP} palette={BOOM_PALETTE} pixel={7} />
+                <PixelSprite map={BOOM_MAP} palette={BOOM_PALETTE} pixel={4} />
               </div>
               <h2 className="shooter-overlay__title shooter-overlay__title--warn">
                 飞船被击落啦！

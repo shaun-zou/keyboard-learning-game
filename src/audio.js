@@ -242,6 +242,14 @@ export function playNote(name, duration = 0.3, volume = 0.14) {
   } catch {}
 }
 
+// 按频率弹奏任意音符（键盘音乐盒用，两个八度以上的完整音域）
+export function playFreq(freq, duration = 0.4, type = 'triangle', volume = 0.13) {
+  if (!enabled || !freq) return;
+  try {
+    tone(freq, 0, duration, type, volume);
+  } catch {}
+}
+
 // 朗读字母的英文名字：优先播放预生成的真人音频（按键即播零延迟），缺失时回退 TTS
 const letterCache = {};
 export function speakLetter(letter) {

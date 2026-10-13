@@ -410,5 +410,20 @@ export const TYPE_LESSONS = [
       { text: 'global nonlocal del raise assert', emoji: '🚦', note: '全局 · 局部外层 · 删除 · 抛出 · 断言' },
       { text: 'async await yield with next', emoji: '⚡', note: '异步 · 等待 · 生成 · 上下文 · 下一个' }
     ]
+  },
+  {
+    name: 'Shift 组合挑战',
+    emoji: '⇧',
+    desc: '按住 Shift 打出大写字母和符号，进阶小高手！',
+    lines: [
+      { text: 'Aa Bb Cc', emoji: '🔤', note: '按住 Shift 再按字母就是大写，松开回到小写' },
+      { text: 'Hello World', emoji: '👋', note: '两个单词的开头都用 Shift 帮忙' },
+      { text: 'My Name Is Tom', emoji: '🧒', note: '每个词的首字母都要大写哦' },
+      { text: 'I Am Happy!', emoji: '😄', note: 'Shift + 1 可以打出感叹号！' },
+      { text: 'Is It True?', emoji: '🤔', note: 'Shift + / 可以打出问号' },
+      { text: 'YES! WE DID IT!', emoji: '🎉', note: '全大写，把胜利喊出来！' },
+      { text: 'Good Job! Well Done?', emoji: '👍', note: '大写字母和符号混在一起' },
+      { text: 'The Quick Brown Fox Jumps', emoji: '🦊', note: '经典的全字母句，试试不看键盘打完' }
+    ]
   }
 ];

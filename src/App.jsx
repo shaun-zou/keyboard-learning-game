@@ -4,6 +4,12 @@ import Learn from './screens/Learn.jsx';
 import FindKey from './screens/FindKey.jsx';
 import TypeGame from './screens/Type.jsx';
 import Privacy from './screens/Privacy.jsx';
+import SpeedTest from './screens/SpeedTest.jsx';
+import Cert from './screens/Cert.jsx';
+import Shop from './screens/Shop.jsx';
+import Badges from './screens/Badges.jsx';
+import Music from './screens/Music.jsx';
+import Mole from './screens/Mole.jsx';
 import { isSoundOn, setSoundOn, warmUpSpeech } from './audio.js';
 
 export default function App() {
@@ -21,42 +27,44 @@ export default function App() {
     };
   }, []);
 
+  // 切换页面时回到顶部，避免上一页的滚动位置带进新页面
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [screen]);
+
   const toggleSound = () => {
     const next = !sound;
     setSoundOn(next);
     setSound(next);
   };
 
+  const goHome = (e) => {
+    e.currentTarget.blur();
+    setScreen('home');
+  };
+
   return (
     <div className="app">
       <div className="bg-deco" aria-hidden="true">
-        <span>🎈</span>
         <span>⭐</span>
-        <span>☁️</span>
-        <span>🌈</span>
-        <span>🎵</span>
+        <span>🍬</span>
+        <span>✨</span>
+        <span>🎈</span>
+        <span>🍬</span>
       </div>
 
       <header className="topbar">
-        <button
-          className="topbar__logo"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            setScreen('home');
-          }}
-        >
-          <span className="topbar__logo-emoji">🎹</span>
-          键盘小达人
+        <button className="topbar__brand" onClick={goHome}>
+          <span className="topbar__mark" aria-hidden="true">
+            键
+          </span>
+          <span className="topbar__name">
+            键盘<b>小达人</b>
+          </span>
         </button>
         <div className="topbar__actions">
           {screen !== 'home' && (
-            <button
-              className="btn btn--ghost btn--sm"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setScreen('home');
-              }}
-            >
+            <button className="btn btn--ghost btn--sm" onClick={goHome}>
               🏠 首页
             </button>
           )}
@@ -70,6 +78,9 @@ export default function App() {
           >
             {sound ? '🔊 声音' : '🔇 静音'}
           </button>
+          <button className="topbar__privacy" onClick={() => setScreen('privacy')}>
+            隐私
+          </button>
         </div>
       </header>
 
@@ -78,21 +89,15 @@ export default function App() {
         {screen === 'learn' && <Learn />}
         {screen === 'find' && <FindKey />}
         {screen === 'type' && <TypeGame />}
+        {screen === 'speed' && <SpeedTest />}
+        {screen === 'daily' && <SpeedTest forceDaily />}
+        {screen === 'cert' && <Cert />}
+        {screen === 'shop' && <Shop />}
+        {screen === 'badges' && <Badges />}
+        {screen === 'music' && <Music />}
+        {screen === 'mole' && <Mole />}
         {screen === 'privacy' && <Privacy onBack={() => setScreen('home')} />}
       </main>
-
-      <footer className="app__foot">
-        小朋友，每天练一练，你就是键盘小达人！⭐
-        <button
-          className="app__foot-privacy"
-          onClick={(e) => {
-            e.currentTarget.blur();
-            setScreen('privacy');
-          }}
-        >
-          🔒 隐私说明
-        </button>
-      </footer>
     </div>
   );
 }

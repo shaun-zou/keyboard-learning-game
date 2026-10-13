@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 
 // 把浏览器 KeyboardEvent 归一化成游戏内部使用的键码
-// 字母 -> 保留大小写（支持 True/False 这类大写练习）；空格 -> ' '；回车 -> 'Enter'；其余忽略
+// 字母 -> 保留大小写（支持 True/False 这类大写练习）；空格 -> ' '；回车 -> 'Enter'
+// Shift 组合符号（!?:" 等）也放行，供 Shift 组合课程使用；其余忽略
 export function normalizeKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return null;
   if (e.key === ' ') return ' ';
   if (e.key === 'Enter') return 'Enter';
-  if (e.key && e.key.length === 1 && /[a-z'`,.;/\\\[\]-]/i.test(e.key)) {
+  if (e.key && e.key.length === 1 && /[a-z0-9'`,.;/\\[\]{}\-_=+!?:"<>~@#$%^&*()|]/i.test(e.key)) {
     return e.key;
   }
   return null;

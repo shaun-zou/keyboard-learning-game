@@ -3,13 +3,16 @@ import { TYPE_LESSONS, FINGERS, KEY_FINGER } from '../data/keyboard.js';
 import Keyboard from '../components/Keyboard.jsx';
 import { usePhysicalKey } from '../hooks/useKeys.js';
 import { sfx, playWinCheer } from '../audio.js';
-import { recordTyping, getTypingStats, recordActivity } from '../stats.js';
+import { recordTyping, getTypingStats, recordActivity, recordKeyHit } from '../stats.js';
 
 function starsOf(errors) {
   if (errors === 0) return 3;
   if (errors <= 2) return 2;
   return 1;
 }
+
+// Shift 组合符号 → 对应的基础键（用于点亮屏幕键盘上的正确键位）
+const SHIFT_BASE = { '!': '1', '?': '/' };
 
 export default function TypeGame() {
   // select(选课) | play(打字中) | lineDone(一行完成) | done(课程结算)
@@ -23,6 +26,14 @@ export default function TypeGame() {
   const [lineStars, setLineStars] = useState(0);
   const [shakeAt, setShakeAt] = useState(-1);
   const [flash, setFlash] = useState(null);
+  // 盲打模式：藏起屏幕键盘的字母，全靠手指记忆打字（与找键位闯关共用开关）
+  const [blind, setBlind] = useState(() => {
+    try {
+      return localStorage.getItem('kb_blind_v1') === '1';
+    } catch {
+      return false;
+    }
+  });
   const shakeTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(shakeTimer.current), []);
@@ -95,6 +106,8 @@ export default function TypeGame() {
 
     if (hit) {
       sfx.click();
+      // 字母作答记入薄弱键诊断（符号不参与）
+      if (expected && /^[a-z]$/i.test(expected)) recordKeyHit(expected.toLowerCase(), true);
       setFlash({ code: String(code).toLowerCase(), ok: true });
       setTimeout(
         () => setFlash((f) => (f && f.code === String(code).toLowerCase() && f.ok ? null : f)),
@@ -111,9 +124,10 @@ export default function TypeGame() {
       } else {
         setPos((p) => p + 1);
       }
-    } else if (/^[a-z]$/i.test(code) || code === ' ') {
-      // 只对字母/空格判错，其他键不打扰小朋友
+    } else if (/^[a-z]$/i.test(code) || code === ' ' || code === '!' || code === '?') {
+      // 只对字母/空格/Shift 符号判错，其他键不打扰小朋友
       sfx.wrong();
+      if (expected && /^[a-z]$/i.test(expected)) recordKeyHit(expected.toLowerCase(), false);
       setErrTotal((v) => v + 1);
       setErrLine((v) => v + 1);
       setFlash({ code: String(code).toLowerCase(), ok: false });
@@ -259,6 +273,22 @@ export default function TypeGame() {
           练习 {lineIdx + 1} / {lesson.lines.length}
         </span>
         <span className="hud__pill">错误 {errTotal} 次</span>
+        <button
+          className={`chip chip--btn${blind ? ' chip--on' : ''}`}
+          title="盲打模式：藏起键盘字母，全靠手指记忆"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setBlind((v) => {
+              const next = !v;
+              try {
+                localStorage.setItem('kb_blind_v1', next ? '1' : '0');
+              } catch {}
+              return next;
+            });
+          }}
+        >
+          🙈 盲打{blind ? ' 开' : ''}
+        </button>
       </div>
 
       <section className="panel type-card">
@@ -287,11 +317,17 @@ export default function TypeGame() {
           <p className="type-card__guide">
             下一个：按
             <span className="next-key">
-              {expected === ' ' ? '空格键' : isUpper ? `Shift + ${expected}` : expected.toUpperCase()}
+              {expected === ' '
+                ? '空格键'
+                : isUpper
+                  ? `Shift + ${expected}`
+                  : SHIFT_BASE[expected]
+                    ? `Shift + ${SHIFT_BASE[expected]}`
+                    : expected.toUpperCase()}
             </span>
             键
             {isUpper && <span className="shift-tip">（先按住 Shift 再按字母）</span>}
-            {finger && (
+            {finger && !blind && (
               <>
                 ，用
                 <span className="finger-dot" style={{ background: finger.color }} />
@@ -323,9 +359,10 @@ export default function TypeGame() {
 
       <section className="panel type-game__kb">
         <Keyboard
-          lit={phase === 'play' && expected ? expected.toLowerCase() : null}
+          lit={phase === 'play' && expected ? SHIFT_BASE[expected] || expected.toLowerCase() : null}
           flash={flash}
-          showFinger
+          showFinger={!blind}
+          blind={blind}
           clickable
           onKey={(k) => handleKey(k)}
         />

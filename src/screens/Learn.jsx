@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { FINGERS, KEY_FINGER, KEY_TIPS, LETTERS, rowNameOf } from '../data/keyboard.js';
+import { FINGERS, KEY_FINGER, KEY_TIPS, LETTERS, FUNCTION_KEYS, rowNameOf } from '../data/keyboard.js';
 import Keyboard from '../components/Keyboard.jsx';
 import LearnFunctions from './LearnFunctions.jsx';
 import { usePhysicalKey } from '../hooks/useKeys.js';
 import { sfx, speakLetter, isSoundOn } from '../audio.js';
-import { recordLearn, recordActivity, getLearnStats } from '../stats.js';
+import {
+  recordLearn,
+  recordActivity,
+  getLearnStats,
+  getFnKeysLearned
+} from '../stats.js';
 
 const STORE_KEY = 'kb_learned_v1';
 
@@ -69,13 +74,16 @@ export default function Learn() {
 
   /* ---------- 选卡页 ---------- */
   if (view === 'select') {
+    const fnCount = new Set(getFnKeysLearned()).size;
+    const l1Done = learned.size >= LETTERS.length;
+    const l2Done = fnCount >= FUNCTION_KEYS.length;
     return (
       <div className="select-screen">
         <h2 className="screen-title">🎹 认识键盘</h2>
-        <p className="screen-subtitle">先认识 26 个字母键，再去看看数字、符号和功能键的本领！</p>
+        <p className="screen-subtitle">先认识 26 个字母键，再去按一按 8 个功能键，第 1 站就通关啦！</p>
         <div className="level-grid learn-select-grid">
           <button
-            className="level-card panel"
+            className={`level-card panel${l1Done ? ' level-card--done' : ''}`}
             onClick={(e) => {
               e.currentTarget.blur();
               sfx.click();
@@ -90,10 +98,11 @@ export default function Learn() {
             <span className="level-card__keys">
               已认识 {learned.size} / {LETTERS.length} 个字母
             </span>
+            {l1Done && <span className="level-card__badge">⭐ 已过关</span>}
           </button>
 
           <button
-            className="level-card panel"
+            className={`level-card panel${l2Done ? ' level-card--done' : ''}`}
             onClick={(e) => {
               e.currentTarget.blur();
               sfx.click();
@@ -101,11 +110,14 @@ export default function Learn() {
             }}
           >
             <span className="level-card__emoji">🎛️</span>
-            <span className="level-card__name">第 2 关 · 其它键区介绍</span>
+            <span className="level-card__name">第 2 关 · 其它键区</span>
             <span className="level-card__desc">
               认识数字区、符号区和功能键区：Shift、回车、退格都会做什么？
             </span>
-            <span className="level-card__keys">🔢 数字 · ✨ 符号 · 🎛️ 功能键</span>
+            <span className="level-card__keys">
+              已按下 {fnCount} / {FUNCTION_KEYS.length} 个功能键
+            </span>
+            {l2Done && <span className="level-card__badge">⭐ 已过关</span>}
           </button>
         </div>
       </div>

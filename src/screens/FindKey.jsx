@@ -5,7 +5,7 @@ import AbcSong from './AbcSong.jsx';
 import Shooter from './Shooter.jsx';
 import { usePhysicalKey, pickRandom } from '../hooks/useKeys.js';
 import { sfx, playPraise, playWinCheer } from '../audio.js';
-import { recordFindKey, getFindKeyStats, recordActivity } from '../stats.js';
+import { recordFindKey, getFindKeyStats, recordActivity, recordKeyHit } from '../stats.js';
 
 const ROUNDS = 20;
 // 每达到这么多连击朗读一次英语鼓励（3、6、9…）
@@ -53,6 +53,14 @@ export default function FindKey() {
   // 星球大战关卡：结算时的成绩（ref 保证 done effect 读到最新值）
   const [shooterResult, setShooterResult] = useState({ score: 0, hits: 0, accuracy: 100 });
   const shooterResultRef = useRef(shooterResult);
+  // 盲打模式：藏起屏幕键盘的字母和发光提示，全靠手指记忆找键（所有闯关共用开关）
+  const [blind, setBlind] = useState(() => {
+    try {
+      return localStorage.getItem('kb_blind_v1') === '1';
+    } catch {
+      return false;
+    }
+  });
   const timerRef = useRef(null);
   // 连击数用 ref 作为唯一真相，避免快速连按（答错后立即答对）时闭包值过期
   const streakRef = useRef(0);
@@ -129,6 +137,7 @@ export default function FindKey() {
     // 物理键盘可能传入大写（Shift/CapsLock），统一转小写
     const code = typeof raw === 'string' ? raw.toLowerCase() : raw;
     if (!/^[a-z]$/.test(code)) return; // 只接受字母
+    recordKeyHit(target, code === target); // 记录薄弱键诊断数据
 
     if (code === target) {
       sfx.correct();
@@ -375,6 +384,22 @@ export default function FindKey() {
           第 {round + 1} / {ROUNDS} 题
         </span>
         <span className="hud__pill hud__pill--fire">🔥 连击 {streak}</span>
+        <button
+          className={`chip chip--btn${blind ? ' chip--on' : ''}`}
+          title="盲打模式：藏起键盘字母，全靠手指记忆"
+          onClick={(e) => {
+            e.currentTarget.blur();
+            setBlind((v) => {
+              const next = !v;
+              try {
+                localStorage.setItem('kb_blind_v1', next ? '1' : '0');
+              } catch {}
+              return next;
+            });
+          }}
+        >
+          🙈 盲打{blind ? ' 开' : ''}
+        </button>
       </div>
 
       <section className={`find-card panel ${happy ? 'find-card--happy' : ''}`}>
@@ -396,7 +421,7 @@ export default function FindKey() {
               ? ''
               : '准备好了吗？'}
         </p>
-        {hint && finger && phase === 'play' && (
+        {hint && finger && phase === 'play' && !blind && (
           <p className="find-card__hint">
             💡 提示：用
             <span className="finger-dot" style={{ background: finger.color }} />
@@ -408,9 +433,10 @@ export default function FindKey() {
 
       <section className="panel find-game__kb">
         <Keyboard
-          lit={hint && phase === 'play' ? target : null}
+          lit={!blind && hint && phase === 'play' ? target : null}
           flash={flash}
-          showFinger
+          showFinger={!blind}
+          blind={blind}
           clickable
           onKey={answer}
         />

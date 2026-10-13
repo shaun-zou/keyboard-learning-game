@@ -14,6 +14,8 @@ import { normalizeKey } from '../hooks/useKeys.js';
 //   activeRegion 当前高亮的分区 id（null = 四区总览）
 //   activeFuncKey 当前选中的功能键码
 //   onFuncKey  分区模式下点击按键回调
+//   doneFuncKeys 已打卡的功能键码集合（显示 ✓ 打勾，认识键盘第 2 关用）
+//   blind        盲打模式：隐藏所有键帽字母与手指提示，只保留按键轮廓和按压反馈
 const HOME_GUIDE_KEYS = new Set(['a', 's', 'd', 'f', 'j', 'k', 'l', ';']);
 
 // 分区认识模式下，物理按键的功能键归一化
@@ -42,7 +44,9 @@ export default function Keyboard({
   regionMode = false,
   activeRegion = null,
   activeFuncKey = null,
-  onFuncKey = null
+  onFuncKey = null,
+  doneFuncKeys = null,
+  blind = false
 }) {
   // 物理键盘按下时，让对应键“沉下去”
   const [down, setDown] = useState(null);
@@ -85,7 +89,10 @@ export default function Keyboard({
   };
 
   return (
-    <div className={`keyboard${regionMode ? ' keyboard--regions' : ''}`} aria-label="屏幕键盘">
+    <div
+      className={`keyboard${regionMode ? ' keyboard--regions' : ''}${blind ? ' keyboard--blind' : ''}`}
+      aria-label="屏幕键盘"
+    >
       {KEYBOARD_ROWS.map((row, ri) => (
         <div className="kb-row" key={ri}>
           {row.map((k) => {
@@ -120,6 +127,9 @@ export default function Keyboard({
                 classes.push('key--func-active');
               }
             }
+            // 第 2 关：已打卡的功能键打勾
+            const isFnDone = regionMode && doneFuncKeys && doneFuncKeys.has(k.code);
+            if (isFnDone) classes.push('key--func-done');
 
             const fingerId = KEY_FINGER[k.code];
 
@@ -133,6 +143,7 @@ export default function Keyboard({
                 <span className={k.code === ' ' ? 'key__label key__label--space' : 'key__label'}>
                   {k.label}
                 </span>
+                {isFnDone && <span className="key__done-check" aria-hidden="true">✓</span>}
                 {showFinger && !regionMode && fingerId && (
                   <span
                     className="key__finger"

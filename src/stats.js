@@ -34,7 +34,12 @@ function defaultStats() {
     playDates: [],
     findKey: {},   // { [levelIdx]: { stars, bestFirstTry, bestCombo, minAttempts, completed, lastPlay } }
     typing: {},    // { [lessonIdx]: { stars, bestAccuracy, leastErrors, completed, lastPlay } }
-    learn: { learnedCount: 0, learnedLetters: [], lastPlay: '' }
+    learn: { learnedCount: 0, learnedLetters: [], lastPlay: '' },
+    speed: { bestKpm: 0, bestAccuracy: 0, plays: 0 }, // 打字测速
+    daily: { date: '', done: false, bestKpm: 0 },      // 每日挑战
+    keyErr: {},                                        // 薄弱键诊断 { [letter]: { total, wrong } }
+    shop: { spent: 0, owned: [], equipped: '' },       // 蛋仔装扮商店
+    certName: ''                                       // 通关证书名字
   };
 }
 
@@ -109,6 +114,37 @@ export function recordLearn(learnedLetters) {
   return s;
 }
 
+// 认识键盘 · 第 2 关：功能键按下记录（独立 key：kd_fn_keys，存规范键码数组）
+const FN_KEYS_KEY = 'kd_fn_keys';
+
+export function getFnKeysLearned() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(FN_KEYS_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+// 记录一个功能键已被按下过（code 为规范键码，如 ShiftLeft / Enter / ' '）
+export function recordFnKeyLearned(code) {
+  const arr = getFnKeysLearned();
+  if (!arr.includes(code)) {
+    arr.push(code);
+    try {
+      localStorage.setItem(FN_KEYS_KEY, JSON.stringify(arr));
+    } catch {}
+  }
+  recordActivity();
+  return arr;
+}
+
+export function resetFnKeysLearned() {
+  try {
+    localStorage.removeItem(FN_KEYS_KEY);
+  } catch {}
+}
+
 export function getStats() {
   return load();
 }
@@ -146,4 +182,109 @@ export function getTotalStars() {
 // 一键清空全部记录（家长可手动重置）
 export function resetAllStats() {
   save(defaultStats());
+}
+
+/* ============================================================
+   打字测速挑战
+   ============================================================ */
+
+export function getSpeedStats() {
+  return load().speed;
+}
+
+export function recordSpeedTest({ kpm, accuracy }) {
+  recordActivity();
+  const s = load();
+  s.speed = {
+    bestKpm: Math.max(s.speed.bestKpm || 0, kpm),
+    bestAccuracy: Math.max(s.speed.bestAccuracy || 0, accuracy),
+    plays: (s.speed.plays || 0) + 1
+  };
+  save(s);
+  return s.speed;
+}
+
+/* ============================================================
+   每日挑战（30 秒内敲对目标个数，目标由日期决定）
+   ============================================================ */
+
+export function getDailyInfo(dateStr) {
+  const s = load();
+  const done = s.daily.date === dateStr ? !!s.daily.done : false;
+  return { date: dateStr, done, bestKpm: s.daily.date === dateStr ? s.daily.bestKpm || 0 : 0 };
+}
+
+export function markDailyDone(dateStr, kpm) {
+  const s = load();
+  s.daily = { date: dateStr, done: true, bestKpm: Math.max(s.daily.bestKpm || 0, kpm) };
+  save(s);
+}
+
+/* ============================================================
+   薄弱键诊断：记录每个字母的作答次数与错误次数
+   ============================================================ */
+
+export function recordKeyHit(letter, ok) {
+  const code = typeof letter === 'string' ? letter.toLowerCase() : letter;
+  if (!/^[a-z]$/.test(code)) return;
+  const s = load();
+  const cur = s.keyErr[code] || { total: 0, wrong: 0 };
+  s.keyErr[code] = { total: cur.total + 1, wrong: cur.wrong + (ok ? 0 : 1) };
+  save(s);
+}
+
+// 返回最薄弱的几个字母 [{ letter, acc }]；作答不足 minTotal 次的键不参与
+export function getWeakKeys({ minTotal = 5, maxKeys = 4, maxAcc = 0.85 } = {}) {
+  const s = load();
+  const list = [];
+  for (const [letter, v] of Object.entries(s.keyErr || {})) {
+    if (!v || v.total < minTotal) continue;
+    const acc = (v.total - v.wrong) / v.total;
+    if (acc <= maxAcc) list.push({ letter, acc });
+  }
+  list.sort((a, b) => a.acc - b.acc);
+  return list.slice(0, maxKeys);
+}
+
+/* ============================================================
+   蛋仔装扮商店：星星当零花钱（可花 = 总星星 - 已花）
+   ============================================================ */
+
+export function getShopState() {
+  return load().shop;
+}
+
+export function buyShopItem(id, price) {
+  const s = load();
+  const shop = s.shop;
+  if (shop.owned.includes(id)) return s.shop;
+  const totalStars = Object.values(s.findKey).reduce((n, v) => n + (v.stars || 0), 0) +
+    Object.values(s.typing).reduce((n, v) => n + (v.stars || 0), 0);
+  if (totalStars - shop.spent < price) return s.shop;
+  shop.spent += price;
+  shop.owned.push(id);
+  shop.equipped = id; // 买下即戴上
+  save(s);
+  return s.shop;
+}
+
+export function equipShopItem(id) {
+  const s = load();
+  s.shop.equipped = s.shop.owned.includes(id) ? id : '';
+  save(s);
+  return s.shop;
+}
+
+/* ============================================================
+   通关证书名字
+   ============================================================ */
+
+export function getCertName() {
+  return load().certName;
+}
+
+export function setCertName(name) {
+  const s = load();
+  s.certName = String(name || '').slice(0, 12);
+  save(s);
 }
