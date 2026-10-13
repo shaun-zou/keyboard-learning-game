@@ -10,6 +10,8 @@ import Shop from './screens/Shop.jsx';
 import Badges from './screens/Badges.jsx';
 import Music from './screens/Music.jsx';
 import Mole from './screens/Mole.jsx';
+import Balloon from './screens/Balloon.jsx';
+import Cashier from './screens/Cashier.jsx';
 import { isSoundOn, setSoundOn, warmUpSpeech } from './audio.js';
 
 export default function App() {
@@ -96,6 +98,8 @@ export default function App() {
         {screen === 'badges' && <Badges />}
         {screen === 'music' && <Music />}
         {screen === 'mole' && <Mole />}
+        {screen === 'balloon' && <Balloon />}
+        {screen === 'cashier' && <Cashier />}
         {screen === 'privacy' && <Privacy onBack={() => setScreen('home')} />}
       </main>
     </div>

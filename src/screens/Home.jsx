@@ -7,7 +7,6 @@ import {
   getStats,
   getFnKeysLearned,
   getWeakKeys,
-  getDailyInfo,
   getShopState
 } from '../stats.js';
 import { sfx } from '../audio.js';
@@ -29,9 +28,8 @@ export default function Home({ onPick }) {
   const l2 = fnKeys.size >= FUNCTION_KEYS.length ? 1 : 0;
   const findDone = Object.values(stats.findKey).filter((v) => v && v.completed).length;
   const typeDone = Object.values(stats.typing).filter((v) => v && v.completed).length;
-  // 薄弱键诊断 / 每日挑战 / 已戴装扮
+  // 薄弱键诊断 / 已戴装扮
   const weakKeys = getWeakKeys();
-  const dailyInfo = getDailyInfo(new Date().toISOString().slice(0, 10));
   const equippedAcc = getShopState().equipped || '';
 
   const stations = [
@@ -70,28 +68,39 @@ export default function Home({ onPick }) {
   const graduated = totalDone >= TOTAL_LEVELS;
   const rank = graduated ? (streak.streakDays >= 7 ? 'doctor' : 'bachelor') : 'normal';
 
-  // 游乐场入口（cert 未通关时锁定）
-  const playItems = [
-    { id: 'speed', emoji: '🏎️', name: '打字测速', desc: '60 秒极限挑战，刷新最快纪录！' },
+  // 游乐场区用「🎡 游乐场 / 🏆 荣誉馆」标题式标签切换：
+  //  游乐场：打字测速 / 打地鼠 / 音乐盒（每日挑战入口在打字测速的模式选择页里）
+  //  荣誉馆：成就徽章 / 蛋仔装扮 / 通关证书（cert 未通关时锁定）
+  const [playTab, setPlayTab] = useState('games');
+  const playTabs = [
     {
-      id: 'daily',
-      emoji: '🎯',
-      name: '每日挑战',
-      desc: dailyInfo.done ? `今日已完成 · ${dailyInfo.bestKpm || 0} 字母/分钟` : '30 秒限时冲刺，完成今日目标',
-      badge: dailyInfo.done ? '✓ 已完成' : '今日 NEW'
+      id: 'games',
+      label: '🎡 游乐场',
+      items: [
+        { id: 'speed', emoji: '🏎️', name: '打字测速', desc: '60 秒极限挑战，刷新最快纪录！' },
+        { id: 'balloon', emoji: '🎈', name: '气球雨', desc: '字母气球往上飘，快敲破它们！' },
+        { id: 'mole', emoji: '🐹', name: '打地鼠', desc: '敲对地鼠背上的字母，手快有奖！' },
+        { id: 'music', emoji: '🎵', name: '音乐盒', desc: '把键盘当钢琴，A 到 Z 音越来越高' },
+        { id: 'cashier', emoji: '🛒', name: '收银员', desc: '用数字键收银，练最上面一排键' }
+      ]
     },
-    { id: 'mole', emoji: '🐹', name: '打地鼠', desc: '敲对地鼠背上的字母，手快有奖！' },
-    { id: 'music', emoji: '🎵', name: '音乐盒', desc: '把键盘当钢琴，A 到 Z 音越来越高' },
-    { id: 'badges', emoji: '🏅', name: '成就徽章', desc: '点亮属于你的荣誉勋章墙' },
-    { id: 'shop', emoji: '🎩', name: '蛋仔装扮', desc: '用星星给键键买新装扮' },
     {
-      id: 'cert',
-      emoji: '🎓',
-      name: '通关证书',
-      desc: graduated ? '写上名字，下载属于你的证书' : `闯完 ${TOTAL_LEVELS} 关即可解锁`,
-      locked: !graduated
+      id: 'honors',
+      label: '🏆 荣誉馆',
+      items: [
+        { id: 'badges', emoji: '🏅', name: '成就徽章', desc: '点亮属于你的荣誉勋章墙' },
+        { id: 'shop', emoji: '🎩', name: '蛋仔装扮', desc: '用星星给键键买新装扮' },
+        {
+          id: 'cert',
+          emoji: '🎓',
+          name: '通关证书',
+          desc: graduated ? '写上名字，下载属于你的证书' : `闯完 ${TOTAL_LEVELS} 关即可解锁`,
+          locked: !graduated
+        }
+      ]
     }
   ];
+  const activePlayTab = playTabs.find((t) => t.id === playTab) || playTabs[0];
   const rankLabel =
     rank === 'doctor' ? '博士蛋仔键键' : rank === 'bachelor' ? '学士蛋仔键键' : '圆蛋小角色键键，戴着粉色键帽';
 
@@ -253,16 +262,33 @@ export default function Home({ onPick }) {
         </section>
       )}
 
-      {/* 游乐场：测速 / 每日挑战 / 打地鼠 / 音乐盒 / 成就 / 装扮 / 证书 */}
+      {/* 游乐场：🎡 游乐场（测速/打地鼠/音乐盒）+ 🏆 荣誉馆（成就/装扮/证书） */}
       <section className="playground" aria-label="游乐场">
-        <h2 className="playground__title">🎡 游乐场</h2>
+        <div className="playground-tabs" role="tablist" aria-label="游乐场分类">
+          {playTabs.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={playTab === t.id}
+              className={`playground-tab${playTab === t.id ? ' playground-tab--on' : ''}`}
+              onClick={() => {
+                sfx.click();
+                setPlayTab(t.id);
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
         <div className="playground__grid">
-          {playItems.map((p) => (
+          {activePlayTab.items.map((p) => (
             <button
               key={p.id}
               className={`play-card panel${p.locked ? ' play-card--locked' : ''}`}
               aria-label={`${p.name}，${p.desc}`}
-              onClick={() => go(p.id)}
+              onClick={() => {
+                if (!p.locked) go(p.id); // 锁定的玩法（未通关的证书）不允许进入
+              }}
             >
               <span className="play-card__emoji">{p.locked ? '🔒' : p.emoji}</span>
               <span className="play-card__name">{p.name}</span>

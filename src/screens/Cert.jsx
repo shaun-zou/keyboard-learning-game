@@ -4,7 +4,7 @@ import { getStats, getStreakInfo, getTotalStars, getCertName, setCertName } from
 import { sfx } from '../audio.js';
 
 // 通关证书：Canvas 绘制 + 一键下载 PNG（纯前端，离线可用）
-// 闯完全部关卡后证书生效；未通关也可以预览样式
+// 闯完全部关卡后解锁；未通关一律拦截，不展示证书
 
 const W = 1000;
 const H = 700;
@@ -122,12 +122,25 @@ export default function Cert() {
     sfx.win();
   };
 
+  // 未通关：证书未解锁。放在所有 hooks 之后，保证任何入口进来都拦得住
+  if (!graduated) {
+    const done = l1 + l2 + findDone + typeDone;
+    return (
+      <div className="result-screen panel pop-in">
+        <div className="result__emoji">🔒</div>
+        <h2 className="result__title">证书还没解锁</h2>
+        <p className="result__sub">
+          闯完全部 {totalLevels} 关就能领取通关证书，目前进度 {done} / {totalLevels} 关
+        </p>
+        <p className="result__sub">回到首页继续闯关，加油！💪</p>
+      </div>
+    );
+  }
+
   return (
     <div className="cert-screen">
       <h2 className="screen-title">🎓 通关证书</h2>
-      <p className="screen-subtitle">
-        {graduated ? '闯完全部关卡啦！写下名字，领取属于你的证书！' : '完成全部关卡即可点亮正式证书，先来预览一下吧！'}
-      </p>
+      <p className="screen-subtitle">闯完全部关卡啦！写下名字，领取属于你的证书！</p>
       <div className="cert-canvas-wrap panel">
         <canvas ref={canvasRef} style={{ width: '100%', maxWidth: W, borderRadius: 18 }} />
       </div>

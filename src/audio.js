@@ -269,7 +269,7 @@ const PRAISE_SOUNDS = {
   amazing: 'sounds/praise/amazing.mp3',
   'well-done': 'sounds/praise/well-done.mp3',
   'super-smart': 'sounds/praise/super-smart.mp3',
-  bullseye: 'sounds/praise/bullseye.mp3'
+  unbelievable: 'sounds/praise/unbelievable.mp3'
 };
 
 const praiseCache = {};

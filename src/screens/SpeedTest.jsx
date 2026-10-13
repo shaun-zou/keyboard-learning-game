@@ -16,7 +16,7 @@ import {
 
 const PRACTICE_SECONDS = 60;
 const DAILY_SECONDS = 30;
-const STRIP_LEN = 14; // 屏幕上同时展示的字母流长度
+const STRIP_LEN = 14; // 一行展示的字母个数，全部敲对后换新的一行
 
 // 由日期决定每日挑战目标：25 / 35 / 45 个（30 秒内敲对）
 function dailyTargetOf(dateStr) {
@@ -40,6 +40,7 @@ export default function SpeedTest({ forceDaily = false }) {
   const [phase, setPhase] = useState('select');
   const [mode, setMode] = useState(forceDaily ? 'daily' : 'practice'); // practice | daily
   const [seq, setSeq] = useState([]);
+  const [pos, setPos] = useState(0); // 当前敲到这一行的第几个字母
   const [seconds, setSeconds] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [errors, setErrors] = useState(0);
@@ -51,6 +52,7 @@ export default function SpeedTest({ forceDaily = false }) {
   const deadlineRef = useRef(0);
   const comboRef = useRef(0);
   const seqRef = useRef([]);
+  const posRef = useRef(0);
   const correctRef = useRef(0);
   const errorsRef = useRef(0);
 
@@ -74,10 +76,12 @@ export default function SpeedTest({ forceDaily = false }) {
     const sec = m === 'daily' ? DAILY_SECONDS : PRACTICE_SECONDS;
     const arr = Array.from({ length: STRIP_LEN }, randLetter);
     seqRef.current = arr;
+    posRef.current = 0;
     correctRef.current = 0;
     errorsRef.current = 0;
     comboRef.current = 0;
     setSeq(arr);
+    setPos(0);
     setSeconds(sec);
     setCorrect(0);
     setErrors(0);
@@ -129,7 +133,7 @@ export default function SpeedTest({ forceDaily = false }) {
     if (phase !== 'play') return;
     const code = typeof raw === 'string' ? raw.toLowerCase() : raw;
     if (!/^[a-z]$/.test(code)) return;
-    const expected = seqRef.current[0];
+    const expected = seqRef.current[posRef.current];
     if (code === expected) {
       sfx.click();
       recordKeyHit(expected, true);
@@ -138,10 +142,18 @@ export default function SpeedTest({ forceDaily = false }) {
       comboRef.current += 1;
       setCombo(comboRef.current);
       setBestCombo((b) => Math.max(b, comboRef.current));
-      // 敲对一个：字母流左移一位，尾部补一个新字母
-      const next = [...seqRef.current.slice(1), randLetter()];
-      seqRef.current = next;
-      setSeq(next);
+      // 敲对一个：黄色标记停在原地；整行敲完后换一行新字母
+      const nextPos = posRef.current + 1;
+      if (nextPos >= STRIP_LEN) {
+        const arr = Array.from({ length: STRIP_LEN }, randLetter);
+        seqRef.current = arr;
+        posRef.current = 0;
+        setSeq(arr);
+        setPos(0);
+      } else {
+        posRef.current = nextPos;
+        setPos(nextPos);
+      }
     } else {
       sfx.wrong();
       recordKeyHit(expected, false);
@@ -274,13 +286,13 @@ export default function SpeedTest({ forceDaily = false }) {
           {seq.map((ch, i) => (
             <span
               key={`${i}-${ch}`}
-              className={`speed-chip${i === 0 ? ' speed-chip--now' : i < 4 ? ' speed-chip--next' : ''}`}
+              className={`speed-chip${i < pos ? ' speed-chip--done' : i === pos ? ' speed-chip--now' : i < pos + 4 ? ' speed-chip--next' : ''}`}
             >
               {ch.toUpperCase()}
             </span>
           ))}
         </div>
-        <p className="speed-tip">敲亮黄色的字母！连续敲对会越敲越上头～</p>
+        <p className="speed-tip">敲亮黄色的字母！敲对了会留在原地变黄，一行敲完自动换新的一行～</p>
       </section>
 
       <button className="btn btn--text" onClick={() => setPhase('select')}>

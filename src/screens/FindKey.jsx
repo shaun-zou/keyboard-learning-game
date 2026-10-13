@@ -11,14 +11,15 @@ const ROUNDS = 20;
 // 每达到这么多连击朗读一次英语鼓励（3、6、9…）
 const PRAISE_COMBO_STEP = 3;
 
-// 答对时的英语夸奖（连击达标时显示，并播放预生成的真人语音）
+// 答对时的英语夸奖，按夸奖程度从轻到重排序：
+// 连击每达到 3 的倍数依次升级播放（3→第1句、6→第2句…循环），中间出错连击清零、从头开始
 const PRAISE = [
-  { id: 'awesome', text: 'Awesome!', emoji: '🎉' },
   { id: 'great-job', text: 'Great job!', emoji: '⭐' },
-  { id: 'amazing', text: 'Amazing!', emoji: '💪' },
   { id: 'well-done', text: 'Well done!', emoji: '👏' },
+  { id: 'awesome', text: 'Awesome!', emoji: '🎉' },
+  { id: 'amazing', text: 'Amazing!', emoji: '💪' },
   { id: 'super-smart', text: 'Super smart!', emoji: '🦊' },
-  { id: 'bullseye', text: 'Bullseye!', emoji: '🎯' }
+  { id: 'unbelievable', text: 'Unbelievable!', emoji: '🤩' }
 ];
 const ENCOURAGE = [
   { text: '再试一次哦～' },
@@ -150,10 +151,11 @@ export default function FindKey() {
       setStreak(newStreak);
       setBest((b) => Math.max(b, newStreak));
       setHappy(true);
-      // 连击达到 3、6、9… 时才显示并朗读英语鼓励；其他情况只显示 OK
+      // 连击达到 3、6、9… 时才显示并朗读英语鼓励；按连击次数依次升级夸奖词，出错清零后从头开始
       const isPraiseCombo =
         newStreak >= PRAISE_COMBO_STEP && newStreak % PRAISE_COMBO_STEP === 0;
-      const praise = pickRandom(PRAISE);
+      const praise =
+        PRAISE[(newStreak / PRAISE_COMBO_STEP - 1) % PRAISE.length];
       setMessage(isPraiseCombo ? praise : { text: 'OK', emoji: '' });
       if (isPraiseCombo) {
         // 先播答对音效，再播放真人夸奖录音（音频不可用时内部自动回退朗读）
