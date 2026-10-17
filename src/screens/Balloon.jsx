@@ -4,11 +4,12 @@ import { usePhysicalKey } from '../hooks/useKeys.js';
 import { sfx } from '../audio.js';
 import { recordActivity, recordKeyHit, getWeakKeys } from '../stats.js';
 
-// 字母气球雨：气球从底部往上飘，敲对应字母键戳破它；
-// 飘出顶部算漏掉扣一颗心，3 颗心用完游戏结束。
+// 字母气球雨：限时 60 秒；气球从底部往上飘，敲对应字母键戳破它；
+// 飘出顶部算漏掉扣一颗心，3 颗心用完或时间到游戏结束。
 const LETTERS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const COLORS = ['pink', 'blue', 'green', 'yellow', 'orange', 'purple'];
 const HEARTS = 3;
+const TIME_LIMIT = 60;              // 限时 60 秒，时间到游戏结束
 const TICK_MS = 60;                 // 画面刷新间隔
 const SPAWN_BASE = 2100;            // 初始生成间隔（越大越慢）
 const SPAWN_MIN = 950;              // 最快生成间隔
@@ -32,6 +33,8 @@ export default function Balloon() {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [hearts, setHearts] = useState(HEARTS);
+  const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
+  const [endReason, setEndReason] = useState('time');   // 'time' 时间到 | 'hearts' 心用完
   const [lit, setLit] = useState(null);            // 键盘闪亮反馈
   const [best, setBest] = useState(loadBest);
 
@@ -40,12 +43,26 @@ export default function Balloon() {
   const idRef = useRef(0);
   const spawnAccRef = useRef(0);
   const scoreRef = useRef(0);
+  const deadlineRef = useRef(0);                   // 本局截止时间戳
+  const timeLeftRef = useRef(TIME_LIMIT);
   const weakRef = useRef([]);                      // 薄弱键：优先出这些字母的气球
 
-  // 游戏主循环：生成 + 上飘 + 漏掉判定
+  // 游戏主循环：倒计时 + 生成 + 上飘 + 漏掉判定
   useEffect(() => {
     if (phase !== 'play') return;
     const timer = setInterval(() => {
+      // 0) 倒计时：时间到直接结算
+      const left = Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000));
+      if (left !== timeLeftRef.current) {
+        timeLeftRef.current = left;
+        setTimeLeft(left);
+      }
+      if (left <= 0) {
+        setEndReason('time');
+        setPhase('done');
+        return;
+      }
+
       // 1) 生成新气球
       spawnAccRef.current += TICK_MS;
       const gap = Math.max(SPAWN_MIN, SPAWN_BASE - scoreRef.current * 2.5);
@@ -62,19 +79,19 @@ export default function Balloon() {
           letter,
           color: COLORS[Math.floor(Math.random() * COLORS.length)],
           x: 8 + Math.random() * 78,              // 水平位置 %
-          y: -14,                                  // 从面板底部外升起
+          y: 114,                                  // 从面板底部外往上飘（top% 越小越靠上）
           rise: RISE_BASE + Math.min(0.4, scoreRef.current / 900)
         };
         balloonsRef.current = [...balloonsRef.current, bln];
         setBalloons(balloonsRef.current);
       }
 
-      // 2) 上飘 & 漏掉判定
+      // 2) 上飘 & 漏掉判定（飘出顶部算漏掉）
       const missed = [];
       balloonsRef.current = balloonsRef.current
-        .map((b) => (popRef.current.has(b.id) ? b : { ...b, y: b.y + b.rise }))
+        .map((b) => (popRef.current.has(b.id) ? b : { ...b, y: b.y - b.rise }))
         .filter((b) => {
-          if (b.y >= 100) {
+          if (b.y <= 0) {
             missed.push(b);
             return false;
           }
@@ -92,7 +109,10 @@ export default function Balloon() {
         setCombo(0);
         setHearts((h) => {
           const left = h - missed.length;
-          if (left <= 0) setPhase('done');
+          if (left <= 0) {
+            setEndReason('hearts');
+            setPhase('done');
+          }
           return Math.max(0, left);
         });
         sfx.wrong();
@@ -103,16 +123,20 @@ export default function Balloon() {
 
   const start = () => {
     recordActivity();
-    weakRef.current = getWeakKeys().map((w) => w.key);
+    weakRef.current = getWeakKeys().map((w) => w.letter);
     balloonsRef.current = [];
     popRef.current = new Set();
     spawnAccRef.current = 0;
     scoreRef.current = 0;
+    deadlineRef.current = Date.now() + TIME_LIMIT * 1000;
+    timeLeftRef.current = TIME_LIMIT;
     setBalloons([]);
     setPopping([]);
     setScore(0);
     setCombo(0);
     setHearts(HEARTS);
+    setTimeLeft(TIME_LIMIT);
+    setEndReason('time');
     setPhase('play');
   };
 
@@ -137,10 +161,10 @@ export default function Balloon() {
     setLit(letter);
     setTimeout(() => setLit((l) => (l === letter ? null : l)), 200);
 
-    // 命中最靠近顶部的匹配气球（最紧急的那个）
+    // 命中最接近顶部的匹配气球（马上要飘走的那个）
     const target = balloonsRef.current
       .filter((b) => !popRef.current.has(b.id) && b.letter === letter)
-      .sort((a, b) => b.y - a.y)[0];
+      .sort((a, b) => a.y - b.y)[0];
 
     if (target) {
       popRef.current.add(target.id);
@@ -176,7 +200,8 @@ export default function Balloon() {
         <h2 className="result__title">字母气球雨</h2>
         <p className="result__sub">气球会从下面飘上来，快敲它身上的字母把它戳破！</p>
         <ul className="result__stats">
-          <li>飘出屏幕会 <strong>漏掉扣 ❤️</strong>，3 颗心用完就结束</li>
+          <li>限时 <strong>{TIME_LIMIT}</strong> 秒，看谁戳得又多又快</li>
+          <li>飘出屏幕会 <strong>漏掉扣 ❤️</strong>，3 颗心用完也会提前结束</li>
           <li>连续戳破有 <strong>连击加分</strong>，越到后面气球飘得越快</li>
           {best.score > 0 && (
             <li>
@@ -205,8 +230,10 @@ export default function Balloon() {
             </span>
           ))}
         </div>
-        <div className="result__emoji">{isBest ? '🏆' : '🎈'}</div>
-        <h2 className="result__title">{isBest ? '新纪录！' : '时间到！'}</h2>
+        <div className="result__emoji">{isBest ? '🏆' : endReason === 'hearts' ? '💔' : '🎈'}</div>
+        <h2 className="result__title">
+          {isBest ? '新纪录！' : endReason === 'hearts' ? '心用完啦！' : '时间到！'}
+        </h2>
         <ul className="result__stats">
           <li>
             本局得分 <strong>{score}</strong>
@@ -231,6 +258,9 @@ export default function Balloon() {
   return (
     <div className="balloon-game">
       <div className="hud">
+        <span className="hud__pill" data-urgent={timeLeft <= 10 ? 'y' : 'n'}>
+          ⏰ {timeLeft} 秒
+        </span>
         <span className="hud__pill">{'❤️'.repeat(hearts) || '💔'}</span>
         <span className="hud__pill">得分 {score}</span>
         {combo >= 2 && <span className="hud__pill hud__pill--hot">🔥 连击 ×{combo}</span>}
