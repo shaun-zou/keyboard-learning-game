@@ -34,6 +34,7 @@ export default function Mole() {
   const [whacked, setWhacked] = useState(0);
   const [escaped, setEscaped] = useState(0);
   const [dizzy, setDizzy] = useState(false); // 被敲中瞬间
+  const [hammer, setHammer] = useState(null); // 木槌敲击动画所在的洞位
   const [newBest, setNewBest] = useState(false);
 
   const bestRef = useRef(loadBest());
@@ -42,6 +43,7 @@ export default function Mole() {
   const comboRef = useRef(0);
   const spawnRef = useRef(null);
   const hideRef = useRef(null);
+  const dizzyRef = useRef(null); // 敲晕延时：锤头砸中那一刻才触发
   const moleRef = useRef(null);
   const deadlineRef = useRef(0);
 
@@ -50,6 +52,7 @@ export default function Mole() {
   const clearTimers = () => {
     clearTimeout(spawnRef.current);
     clearTimeout(hideRef.current);
+    clearTimeout(dizzyRef.current);
   };
   useEffect(() => clearTimers, []);
 
@@ -130,15 +133,20 @@ export default function Mole() {
     comboRef.current += 1;
     setCombo(comboRef.current);
     setBestCombo((b) => Math.max(b, comboRef.current));
-    setDizzy(true);
-    // 地鼠被打晕缩回，稍后冒出下一只
-    clearTimeout(hideRef.current);
+    // 木槌敲下去！地鼠先看着锤子抡下来，锤头砸中（46% ≈ 253ms）才被敲晕
     const hitMole = moleRef.current;
+    setHammer(hitMole.hole);
+    // 760ms：星星 0.26s 后迸溅、0.45s 飞完；锤子 0.55s 内淡出，不遮挡 880ms 后冒头的下一只
+    setTimeout(() => setHammer((h) => (h === hitMole.hole ? null : h)), 760);
+    // 锤头落下的瞬间才敲晕：地鼠摇晃转星 0.55s 后缩回洞里
+    clearTimeout(hideRef.current);
+    clearTimeout(dizzyRef.current);
     moleRef.current = null;
+    dizzyRef.current = setTimeout(() => setDizzy(true), 250);
     setTimeout(() => {
       if (phase === 'play') setMole(null);
-    }, 200);
-    spawnRef.current = setTimeout(spawn, 420);
+    }, 800);
+    spawnRef.current = setTimeout(spawn, 880);
     return hitMole;
   };
 
@@ -155,6 +163,7 @@ export default function Mole() {
     setBestCombo(0);
     setEscaped(0);
     setNewBest(false);
+    setHammer(null);
     setSeconds(GAME_SECONDS);
     setPhase('play');
   };
@@ -256,7 +265,27 @@ export default function Mole() {
                     <i className="mole-mole__nose" />
                   </span>
                   <span className="mole-mole__letter">{mole.letter.toUpperCase()}</span>
+                  {dizzy && (
+                    <span className="mole-dizzy" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                  )}
                 </span>
+              )}
+              {hammer === i && (
+                <>
+                  <span className="mole-hammer" aria-hidden="true">
+                    <span className="mole-hammer__head" />
+                    <span className="mole-hammer__handle" />
+                  </span>
+                  <span className="mole-fx" aria-hidden="true">
+                    <i className="mole-star mole-star--1" />
+                    <i className="mole-star mole-star--2" />
+                    <i className="mole-star mole-star--3" />
+                  </span>
+                </>
               )}
             </button>
           );

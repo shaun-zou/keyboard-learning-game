@@ -80,8 +80,8 @@ export default function Home({ onPick }) {
         { id: 'speed', emoji: '🏎️', name: '打字测速', desc: '60 秒极限挑战，刷新最快纪录！' },
         { id: 'balloon', emoji: '🎈', name: '气球雨', desc: '字母气球往上飘，快敲破它们！' },
         { id: 'mole', emoji: '🐹', name: '打地鼠', desc: '敲对地鼠背上的字母，手快有奖！' },
-        { id: 'music', emoji: '🎵', name: '音乐盒', desc: '把键盘当钢琴，A 到 Z 音越来越高' },
-        { id: 'cashier', emoji: '🛒', name: '收银员', desc: '用数字键收银，练最上面一排键' }
+        { id: 'music', emoji: '🎵', name: '音乐盒', desc: '自由弹钢琴，还能挑战小星星节奏' },
+        { id: 'kart', emoji: '🏁', name: '卡丁车', desc: '敲对路标字母加速，和 AI 蛋仔比赛' }
       ]
     },
     {

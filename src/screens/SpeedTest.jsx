@@ -286,13 +286,13 @@ export default function SpeedTest({ forceDaily = false }) {
           {seq.map((ch, i) => (
             <span
               key={`${i}-${ch}`}
-              className={`speed-chip${i < pos ? ' speed-chip--done' : i === pos ? ' speed-chip--now' : i < pos + 4 ? ' speed-chip--next' : ''}`}
+              className={`speed-tile${i < pos ? ' speed-tile--done' : i === pos ? ' speed-tile--now' : i < pos + 4 ? ' speed-tile--next' : ''}`}
             >
               {ch.toUpperCase()}
             </span>
           ))}
         </div>
-        <p className="speed-tip">敲亮黄色的字母！敲对了会留在原地变黄，一行敲完自动换新的一行～</p>
+        <p className="speed-tip">敲白色凸起带光标的字母！敲对了会留在原地变黄，一行敲完自动换新的一行～</p>
       </section>
 
       <button className="btn btn--text" onClick={() => setPhase('select')}>

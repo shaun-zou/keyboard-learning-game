@@ -2840,7 +2840,8 @@ button {
   flex-wrap: nowrap;
   overflow: hidden;
 }
-.speed-chip {
+.speed-tile {
+  position: relative;
   flex: 0 0 46px;
   height: 58px;
   display: flex;
@@ -2854,22 +2855,44 @@ button {
   font-family: ui-monospace, Menlo, Consolas, monospace;
   opacity: 0.55;
 }
-.speed-chip--next {
+.speed-tile--next {
   opacity: 0.8;
 }
 /* 已敲对的字母：亮黄色留在原地，一行敲完才换新行 */
-.speed-chip--done {
+.speed-tile--done {
   background: var(--yellow);
   color: var(--ink);
   opacity: 1;
   transform: scale(0.96);
 }
-.speed-chip--now {
-  background: var(--yellow);
+/* 当前待输入字符：白色选中态（粗描边+上浮+底部光标条），与已敲对的黄色、未输入的半透明明显区分 */
+.speed-tile--now {
+  background: #fff;
   color: var(--ink);
   opacity: 1;
-  box-shadow: 0 4px 0 var(--yellow-deep), 0 0 18px rgba(255, 201, 74, 0.65);
-  animation: speed-pulse 0.9s infinite;
+  border: 3px solid var(--ink);
+  transform: translateY(-5px) scale(1.06);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.14), 0 0 22px rgba(255, 201, 74, 0.8);
+  animation: speed-now-float 0.85s ease-in-out infinite;
+}
+.speed-tile--now::after {
+  content: '';
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: -11px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--yellow);
+}
+@keyframes speed-now-float {
+  0%,
+  100% {
+    transform: translateY(-5px) scale(1.06);
+  }
+  50% {
+    transform: translateY(-9px) scale(1.06);
+  }
 }
 .speed-tip {
   margin: 14px 0 0;
@@ -3285,11 +3308,42 @@ button {
   100% { transform: translateX(-50%) translateY(0) scale(1); }
 }
 .mole-hole--dizzy .mole-mole {
-  animation: mole-dizzy 0.2s ease-out forwards;
+  animation: mole-knocked 0.55s ease-in forwards;
 }
-@keyframes mole-dizzy {
-  0% { transform: translateX(-50%) rotate(0); }
-  100% { transform: translateX(-50%) translateY(50px) rotate(-18deg); opacity: 0.4; }
+/* 敲晕：先左右摇晃，再缩回洞里消失 */
+@keyframes mole-knocked {
+  0%   { transform: translateX(-50%) rotate(0); opacity: 1; }
+  20%  { transform: translateX(-50%) rotate(-11deg); }
+  38%  { transform: translateX(-50%) rotate(9deg); }
+  55%  { transform: translateX(-50%) rotate(-5deg); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(58px) rotate(-12deg); opacity: 0; }
+}
+/* 头顶转圈的晕眩星 */
+.mole-dizzy {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 0;
+  height: 0;
+}
+.mole-dizzy i {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  background: var(--yellow);
+  clip-path: polygon(50% 0, 63% 34%, 100% 40%, 72% 62%, 79% 100%, 50% 78%, 21% 100%, 28% 62%, 0 40%, 37% 34%);
+  animation: mole-orbit 0.72s linear infinite;
+}
+.mole-dizzy i:nth-child(2) { animation-delay: -0.24s; }
+.mole-dizzy i:nth-child(3) {
+  animation-delay: -0.48s;
+  background: var(--card);
+}
+@keyframes mole-orbit {
+  from { transform: rotate(0) translateX(24px) rotate(0); }
+  to   { transform: rotate(360deg) translateX(24px) rotate(-360deg); }
 }
 .mole-mole__face {
   position: relative;
@@ -3353,6 +3407,128 @@ button {
 }
 
 /* ---------- 游乐场 · 字母气球雨 ---------- */
+.hud__pill--hot {
+  background: #fff0f3;
+  border-color: var(--pink);
+  color: var(--pink-deep);
+}
+/* 打地鼠：敲中时的木槌动画（方向一 · 大力士嘉年华锤，见 direction-approved.md）
+   轨迹：以槌柄尾端为轴，从洞口右上方（起点角＝原落点角 -9°）向左抡转 90° 砸下，
+   落点时槌柄水平、锤头在左侧近竖直，用头底面砸中地鼠头顶 */
+.mole-hammer {
+  position: absolute;
+  left: 26%;
+  top: 2px;
+  width: 96px;
+  height: 104px;
+  transform-origin: 50% 94%;
+  animation: mole-hammer-whack 0.55s cubic-bezier(0.3, 0.6, 0.35, 1) both;
+  pointer-events: none;
+  z-index: 5;
+}
+.mole-hammer__head {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 92px;
+  height: 34px;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #ffb98d 0%, var(--func) 34%, var(--func) 62%, var(--func-deep) 100%);
+  border: 3px solid var(--func-deep);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06);
+  /* 容器旋转 -90° 后，锤头左缘即朝下的敲击面，压扁以此为基准 */
+  transform-origin: 0% 50%;
+  animation: mole-hammer-squash 0.55s both;
+}
+.mole-hammer__head::before {
+  /* 奶油色腰带 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 24px;
+  transform: translateX(-50%);
+  background: var(--cream);
+  border: 3px solid var(--func-deep);
+  border-radius: 5px;
+}
+.mole-hammer__handle {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 14px;
+  height: 66px;
+  margin-left: -7px;
+  border-radius: 8px;
+  background: repeating-linear-gradient(180deg, #c9955e 0 8px, #b98a5a 8px 16px);
+  border: 2px solid #a57747;
+}
+.mole-hammer__handle::after {
+  /* 手柄尾圆头 */
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 22px;
+  height: 15px;
+  margin-left: -11px;
+  border-radius: 7px;
+  background: #b98a5a;
+  border: 2px solid #a57747;
+}
+@keyframes mole-hammer-whack {
+  0%   { transform: translate(94px, -50px) rotate(-9deg); opacity: 0; }
+  8%   { transform: translate(98px, -56px) rotate(-2deg); opacity: 1; }
+  20%  { transform: translate(100px, -58px) rotate(12deg); opacity: 1; }
+  46%  { transform: translate(68px, -55px) rotate(-90deg); opacity: 1; }
+  56%  { transform: translate(69px, -54px) rotate(-88deg); opacity: 1; }
+  80%  { transform: translate(68px, -56px) rotate(-90deg); opacity: 1; }
+  92%  { transform: translate(68px, -56px) rotate(-90deg); opacity: 1; }
+  100% { transform: translate(68px, -56px) rotate(-90deg); opacity: 0; }
+}
+@keyframes mole-hammer-squash {
+  0%, 45% { transform: none; }
+  53%     { transform: scale(0.66, 1.24); }
+  68%     { transform: scale(1.06, 0.95); }
+  100%    { transform: none; }
+}
+/* 砸中点的星星迸溅 */
+.mole-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.mole-star {
+  position: absolute;
+  left: 50%;
+  top: 26px;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  background: var(--yellow);
+  clip-path: polygon(50% 0, 63% 34%, 100% 40%, 72% 62%, 79% 100%, 50% 78%, 21% 100%, 28% 62%, 0 40%, 37% 34%);
+  opacity: 0;
+}
+.mole-star--1 { animation: mole-star1 0.45s 0.26s both; }
+.mole-star--2 { background: var(--card); animation: mole-star2 0.45s 0.26s both; }
+.mole-star--3 { animation: mole-star3 0.45s 0.26s both; }
+@keyframes mole-star1 {
+  0%   { transform: translate(0, 0) scale(0.4) rotate(0); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(-36px, -30px) scale(1) rotate(-60deg); opacity: 0; }
+}
+@keyframes mole-star2 {
+  0%   { transform: translate(0, 0) scale(0.5) rotate(0); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(2px, -50px) scale(1.2) rotate(30deg); opacity: 0; }
+}
+@keyframes mole-star3 {
+  0%   { transform: translate(0, 0) scale(0.4) rotate(0); opacity: 0; }
+  25%  { opacity: 1; }
+  100% { transform: translate(38px, -36px) scale(1.1) rotate(70deg); opacity: 0; }
+}
 .balloon-game {
   display: flex;
   flex-direction: column;
@@ -3427,95 +3603,397 @@ button {
   100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
 }
 
-/* ---------- 游乐场 · 超市收银员 ---------- */
-.cashier-game {
+/* ---------- 游乐场 · 蛋仔卡丁车 ---------- */
+.kart-game {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-.hud__pill--hot {
-  background: #fff0f3;
-  border-color: var(--pink);
-  color: var(--pink-deep);
+/* AI 速度档位：复用星球大战的 speed-chips 结构，配色换成糖果风 */
+.speed-chips--kart {
+  justify-content: center;
+  margin: 4px 0 2px;
 }
-.cashier-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 22px;
-  border-radius: 22px;
-  background: #fffdf7;
-  border: 3px solid #ffe9c9;
+.speed-chips--kart .speed-chip {
+  border-color: var(--edge-warm);
+  background: var(--cream);
+  color: var(--ink-soft);
+  box-shadow: 0 3px 0 rgba(74, 63, 53, 0.08);
 }
-.goods-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 18px 34px 20px;
-  border-radius: 18px;
-  background: #fff;
-  border: 3px solid #f3e2c8;
-  box-shadow: 0 6px 0 #f3e2c8;
-}
-.goods-card__emoji {
-  font-size: 58px;
-  line-height: 1;
-}
-.goods-card__name {
-  font-weight: 800;
-  color: var(--ink);
-}
-.goods-card__tag {
-  font-weight: 900;
-  font-size: 20px;
+.speed-chips--kart .speed-chip--on {
+  border-color: var(--mint-deep);
+  background: linear-gradient(135deg, var(--mint), var(--blue));
   color: #fff;
-  background: var(--pink);
-  padding: 4px 16px;
-  border-radius: 999px;
+  box-shadow: 0 3px 0 rgba(51, 168, 123, 0.4);
 }
-.price-slot {
-  display: flex;
-  gap: 10px;
-}
-.price-slot__digit {
-  width: 62px;
-  height: 74px;
+.kart-sign {
   display: flex;
   align-items: center;
   justify-content: center;
-  font: 900 38px ui-monospace, Menlo, Consolas, monospace;
+  gap: 16px;
+}
+.kart-sign__label {
+  font-weight: 800;
   color: var(--ink-soft);
+}
+.kart-sign__letter {
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 900 44px ui-monospace, Menlo, Consolas, monospace;
+  color: #fff;
+  background: var(--pink);
+  border-radius: 24px;
+  box-shadow: 0 6px 0 var(--pink-deep);
+}
+.kart-track {
+  position: relative;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fdeedd 0%, #f9e3c8 100%);
+  border: 3px solid #ffffff;
+  padding: 18px 0 22px;
+  overflow: hidden;
+}
+.kart-lane {
+  position: relative;
+  height: 86px;
+}
+.kart-lane--ai {
+  border-top: 3px dashed #e8cfa8;
+}
+.kart-lane__who {
+  position: absolute;
+  left: 12px;
+  top: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #b89968;
+  background: #fffdf6;
+  padding: 2px 10px;
+  border-radius: 999px;
+  z-index: 2;
+}
+.kart-car {
+  position: absolute;
+  bottom: 8px;
+  width: 64px;
+  height: 56px;
+  transition: left 0.18s ease;
+}
+.kart-car--bump {
+  animation: kart-bump 0.38s, kart-hurt 0.38s;
+}
+@keyframes kart-bump {
+  30% { transform: rotate(-6deg) translateY(3px); }
+  60% { transform: rotate(4deg); }
+}
+/* 马里奥受伤式红闪：敲错时小车闪两下 */
+@keyframes kart-hurt {
+  0%, 40%, 80% { filter: sepia(1) saturate(7) hue-rotate(-45deg) brightness(1.05); }
+  20%, 60%, 100% { filter: none; }
+}
+.kart-car__body {
+  position: absolute;
+  bottom: 6px;
+  left: 2px;
+  right: 2px;
+  height: 24px;
+  background: linear-gradient(180deg, var(--pink) 58%, #ff8fb0 100%);
+  border-radius: 10px 20px 12px 12px;
+  box-shadow: inset -4px -4px 0 rgba(0, 0, 0, 0.08), inset 0 3px 0 rgba(255, 255, 255, 0.4);
+  z-index: 1;
+}
+/* 座椅靠背：垫在蛋仔身后 */
+.kart-car__body::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  bottom: 13px;
+  width: 13px;
+  height: 20px;
+  background: #d94f7e;
+  border-radius: 6px 6px 2px 2px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12);
+}
+/* 车头前唇：探出车头的一小截 */
+.kart-car__body::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  bottom: 2px;
+  width: 12px;
+  height: 13px;
+  background: inherit;
+  border-radius: 3px 9px 7px 3px;
+}
+.kart-car--rival .kart-car__body {
+  background: linear-gradient(180deg, #6ec6ff 58%, #3fa4e8 100%);
+}
+.kart-car--rival .kart-car__body::before {
+  background: #2b7fb8;
+}
+.kart-car__egg {
+  position: absolute;
+  bottom: 20px;
+  left: 14px;
+  width: 30px;
+  height: 36px;
+  /* 白色蛋形身体 + 朝向行车方向的单侧腮红（3/4 侧脸） */
+  background:
+    radial-gradient(circle 4px at 23px 23px, #ffb3c7 62%, transparent 64%),
+    #fff;
+  border-radius: 48% 48% 44% 44% / 56% 56% 44% 44%;
+  box-shadow: inset -4px -5px 0 #ffe9f0, 0 2px 3px rgba(0, 0, 0, 0.12);
+  z-index: 3;
+}
+/* 呆萌双眼：偏右侧排布，脸朝行车方向 */
+.kart-car__egg::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  width: 3.5px;
+  height: 5.5px;
+  background: #3a3a3a;
+  border-radius: 50%;
+  box-shadow: 5.5px 0 #3a3a3a;
+}
+/* 安全帽：贴合头型的缩小版，帽檐朝前（右） */
+.kart-car__egg::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 1px;
+  right: -3px;
+  height: 12px;
+  background: linear-gradient(180deg, #ffd23e 62%, #e8ab06 62%);
+  border-radius: 12px 12px 4px 4px;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.1), inset 1px 2px 0 rgba(255, 255, 255, 0.55);
+}
+.kart-car__wheel {
+  position: absolute;
+  bottom: -3px;
+  width: 18px;
+  height: 18px;
+  /* 深色轮胎 + 浅色轮毂圆心 */
+  background: radial-gradient(circle at 50% 46%, #d8cdc4 0 3px, #5b4a3f 3.5px 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+.kart-car__wheel--f { right: 2px; }
+.kart-car__wheel--b { left: 2px; }
+.kart-finish {
+  position: absolute;
+  right: 3px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  font-size: 34px;
+  border-left: 4px dashed #d9b98c;
+  padding-left: 2px;
+  z-index: 1;
+}
+
+/* ---- 超级玛丽式动效：天空 / 远山 / 砖块路 / 金币 / 烟尘 ---- */
+.kart-sky {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 58px;
+  pointer-events: none;
+  z-index: 0;
+}
+.kart-cloud {
+  position: absolute;
+  width: 56px;
+  height: 18px;
   background: #fff;
-  border: 3px dashed #ecd9b8;
-  border-radius: 14px;
+  border-radius: 999px;
+  opacity: 0.9;
+  animation: kart-cloud-move linear infinite;
 }
-.price-slot__digit--done {
-  color: var(--ink);
-  border-style: solid;
-  border-color: #6fd394;
-  background: #f0fbf4;
+.kart-cloud::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  width: 22px;
+  height: 22px;
+  background: inherit;
+  border-radius: 50%;
 }
-.price-slot__digit--now {
-  border-style: solid;
-  border-color: var(--yellow-deep);
-  background: #fff8e3;
-  animation: slot-pulse 0.9s infinite;
+.kart-cloud::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  background: inherit;
+  border-radius: 50%;
 }
-.price-slot__digit--shake {
-  animation: slot-shake 0.4s;
+.kart-cloud--1 { top: 8px; animation-duration: 34s; }
+.kart-cloud--2 { top: 30px; transform: scale(0.7); animation-duration: 46s; animation-delay: -18s; }
+.kart-cloud--3 { top: 2px; transform: scale(0.55); animation-duration: 58s; animation-delay: -40s; }
+@keyframes kart-cloud-move {
+  from { left: 104%; }
+  to { left: -12%; }
 }
-@keyframes slot-pulse {
-  50% { box-shadow: 0 0 0 5px rgba(255, 201, 74, 0.35); }
+.kart-hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle 34px at 40px 40px, #9edf8f 98%, transparent) repeat-x,
+    radial-gradient(circle 22px at 90px 40px, #b5ea9f 98%, transparent) repeat-x;
+  background-size: 260px 40px, 170px 40px;
+  background-position: 0 0, 60px 0;
+  animation: kart-hills-move 9s linear infinite;
+  opacity: 0.85;
 }
-@keyframes slot-shake {
-  20%, 60% { transform: translateX(-7px); }
-  40%, 80% { transform: translateX(7px); }
+@keyframes kart-hills-move {
+  from { background-position: 0 0, 60px 0; }
+  to { background-position: -260px 0, -280px 0; }
 }
-.cashier-tip {
-  margin: 0;
-  font-weight: 700;
-  color: var(--ink-soft);
-  font-size: 14px;
+.kart-road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  z-index: 2;
+  background:
+    repeating-linear-gradient(90deg,
+      #d8803a 0 30px, #c96f2e 30px 32px,
+      #e8934a 32px 62px, #c96f2e 62px 64px);
+  border-top: 3px solid #a85a24;
+  animation: kart-road-move 0.55s linear infinite;
+}
+@keyframes kart-road-move {
+  from { background-position: 0 0; }
+  to { background-position: -64px 0; }
+}
+/* 敲对弹出的金币（马里奥式旋转上浮） */
+.kart-coin {
+  position: absolute;
+  bottom: 64px;
+  width: 26px;
+  height: 26px;
+  margin-left: 18px;
+  z-index: 4;
+  pointer-events: none;
+  background: #ffcc33;
+  border: 3px solid #e0a419;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px #ffe38a;
+  animation: kart-coin-pop 0.5s ease-out forwards;
+}
+.kart-coin::after {
+  content: '★';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #e0a419;
+}
+@keyframes kart-coin-pop {
+  0% { transform: translateY(0) rotateY(0) scale(0.5); opacity: 1; }
+  55% { transform: translateY(-46px) rotateY(360deg) scale(1.15); opacity: 1; }
+  100% { transform: translateY(-64px) rotateY(720deg) scale(0.8); opacity: 0; }
+}
+/* 车尾烟尘：加速时喷出的小烟团 */
+.kart-puff {
+  position: absolute;
+  bottom: 10px;
+  width: 18px;
+  height: 18px;
+  margin-left: -16px;
+  z-index: 3;
+  pointer-events: none;
+  background: #ffffffd9;
+  border-radius: 50%;
+  animation: kart-puff-out 0.42s ease-out forwards;
+}
+@keyframes kart-puff-out {
+  0% { transform: scale(0.4) translate(0, 0); opacity: 0.95; }
+  100% { transform: scale(1.7) translate(-26px, -10px); opacity: 0; }
+}
+
+/* ---------- 音乐盒 · 字母乐谱演奏 ---------- */
+.music-game {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.song-strip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+}
+.song-strip__flag {
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--pink);
+  opacity: 0.7;
+}
+.song-strip__window {
+  width: 100%;
+  overflow: hidden;
+  padding: 8px 0 4px;
+}
+.song-strip__inner {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  transition: transform 0.25s ease;
+}
+.song-note {
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 900 24px ui-monospace, Menlo, Consolas, monospace;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.song-note--pink { background: var(--pink); }
+.song-note--blue { background: #6ec6ff; }
+.song-note--green { background: #6fd394; }
+.song-note--orange { background: #ffb36b; }
+.song-note--purple { background: #c79bff; }
+.song-note--done {
+  opacity: 0.38;
+  transform: scale(0.82);
+}
+.song-note--now {
+  transform: scale(1.22);
+  box-shadow: 0 0 0 5px rgba(255, 201, 74, 0.55), 0 6px 0 rgba(0, 0, 0, 0.1);
+  animation: song-pulse 1s infinite;
+}
+.song-note--shake {
+  animation: song-shake 0.4s;
+}
+@keyframes song-pulse {
+  50% { box-shadow: 0 0 0 9px rgba(255, 201, 74, 0.28), 0 6px 0 rgba(0, 0, 0, 0.1); }
+}
+@keyframes song-shake {
+  20%, 60% { transform: scale(1.22) translateX(-7px); }
+  40%, 80% { transform: scale(1.22) translateX(7px); }
 }
